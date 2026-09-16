@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.1.1 (2026-09-16)
+
+- 修复 Linux 上全局记忆路径拼接 bug：两处模板里硬编码反斜杠（`MEMORY.md` 与
+  `*_memory.md` 路径描述），改为 `path.join`，所有平台渲染为原生分隔符。
+- 0.1.0 中 `${dir}\MEMORY.md` 在 Linux 渲染为字面反斜杠路径；`\memory\*_memory.md`
+  的无效转义在所有平台吞掉反斜杠（`.workbuddymemory*_memory.md`）。
+
+## 0.1.1 (2026-09-16)
+
+- Fix Linux path-join bug: two template literals hard-coded backslashes
+  (`MEMORY.md` and the `*_memory.md` path description); now built with
+  `path.join` so every platform renders native separators.
+  (In 0.1.0 `${dir}\MEMORY.md` rendered a literal backslash on Linux, and the
+  invalid escape in `\memory\*_memory.md` dropped the backslash on all platforms.)
+
 ## 0.1.0 (2026-09-16)
 
 - pi 与 WorkBuddy 共用记忆系统的桥接扩展首版。

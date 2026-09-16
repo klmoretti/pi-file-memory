@@ -288,7 +288,7 @@ function buildSnapshot(cwd: string, reason: string): Snapshot {
 	const projMem = readFileSafe(path.join(dir, "MEMORY.md"))?.trim();
 	if (projMem) sections.push(`### 项目长期记忆 ${PROJECT_DIRNAME}/memory/MEMORY.md\n${headText(projMem, MEMORY_MAX)}`);
 	const globMem = readFileSafe(path.join(globalDir, "MEMORY.md"))?.trim();
-	if (globMem) sections.push(`### 全局跨项目记忆 ${globalDir}\\MEMORY.md\n${headText(globMem, GLOBAL_MAX)}`);
+	if (globMem) sections.push(`### 全局跨项目记忆 ${path.join(globalDir, "MEMORY.md")}\n${headText(globMem, GLOBAL_MAX)}`);
 	const profilePath = PROFILE_ON ? findUserProfile(globalDir) : null;
 	const profile = profilePath ? cleanProfile(readFileSafe(profilePath) ?? "") : null;
 	if (profile) sections.push(`### 全局用户画像（WorkBuddy 后台抽取维护，只读勿改）${profilePath}\n${tailText(profile, PROFILE_TAIL)}`);
@@ -341,7 +341,7 @@ ${fmtCurrentTime()}
 </additional_data>
 <memory_discipline>
 记忆规则（文件式记忆，用普通 read/write/edit 文件工具操作，无独立记忆工具）：
-${projectBlock}- 跨项目事实（用户偏好、机器环境、通用工具）写入 ${globMem}。全局用户画像（${globDir}\\memory\\*_memory.md）由 WorkBuddy 后台抽取维护，只读，不要改写。
+${projectBlock}- 跨项目事实（用户偏好、机器环境、通用工具）写入 ${globMem}。全局用户画像（${path.join(globDir, "memory")}\\*_memory.md）由 WorkBuddy 后台抽取维护，只读，不要改写。
 - 会话开始时若需要历史背景，先 read 今日/昨日日记与 MEMORY.md（快照可能滞后，文件为准）；更早的历史日记在同目录（YYYY-MM-DD.md，数十天份），查过程细节/旧决策用 grep 搜关键词或按日期 read。
 - 勘误优先：发现记忆有误，改写原条目并注明日期，不要只追加矛盾新条目。
 - 寒暄、简单查询、短问答不用写。
