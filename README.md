@@ -40,17 +40,28 @@ treated as non-projects: only global memory applies, no fake project tree is cre
 ## Install
 
 ```sh
-# option 1: drop into your global extensions dir (auto-discovered)
-cp file-memory.ts ~/.pi/agent/extensions/
+# option 1 (recommended): pi package manager, one-liner
+pi install npm:pi-file-memory
 
-# option 2: project-local, auto-discovered
-mkdir -p .pi/extensions && cp file-memory.ts .pi/extensions/
+# option 2: from git, pinned ref (no npm account needed)
+pi install git:github.com/Halflifefa/pi-file-memory@v0.1.0
 
-# option 3: quick test in one session
-pi -e ./file-memory.ts
+# option 3: project-local instead of user settings
+pi install -l npm:pi-file-memory
+
+# try without installing (temp dir, current run only)
+pi -e npm:pi-file-memory
+
+# manual: copy the extension into your extensions dir
+mkdir -p ~/.pi/agent/extensions && cp extensions/file-memory.ts ~/.pi/agent/extensions/
 ```
 
-Restart pi (or `/reload`) to pick it up.
+Restart pi (or `/reload`) to pick it up. Manage with `pi list` / `pi remove npm:pi-file-memory` /
+`pi update --extensions`.
+
+> **Note if you already hand-copy the extension** (e.g. a `wb-memory.ts` of your
+> own in `~/.pi/agent/extensions/`): remove the hand-copied file before/after
+> installing the package, or the memory reminder gets injected twice.
 
 ## Per-turn behavior
 

@@ -1,0 +1,20 @@
+{
+  "name": "pi-file-memory",
+  "version": "0.1.0",
+  "description": "pi 与 WorkBuddy 共用记忆系统的桥接扩展 — single-file TypeScript extension, zero runtime dependencies",
+  "keywords": ["pi-package", "pi-extension", "memory", "workbuddy", "coding-agent"],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Halflifefa/pi-file-memory.git"
+  },
+  "files": [
+    "extensions"
+  ],
+  "pi": {
+    "extensions": ["./extensions"]
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*"
+  }
+}
