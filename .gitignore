@@ -1,0 +1,9 @@
+# Memory data is private — never commit it
+.workbuddy/
+*.log
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+node_modules/
+dist/
