@@ -10,7 +10,8 @@
   全局 `~/.workbuddy/`（跨项目 MEMORY.md + 只读用户画像）。
 - 收尾提醒：会话未写当日日志时 TUI 提示。
 - 环境变量开关：`PI_FILE_MEMORY_OFF/INJECT/GLOBAL/DEBUG/DAILY_TAIL/PROFILE/PROFILE_TAIL/LAYOUT`。
-- 标准 pi 包结构，支持 `pi install git:github.com/Halflifefa/pi-file-memory@v0.1.0`（npm 包发布后支持 `pi install npm:pi-file-memory`）。
+- 标准 pi 包结构，支持 `pi install npm:pi-file-memory` 与
+  `pi install git:github.com/Halflifefa/pi-file-memory@v0.1.0`。
 
 ## 0.1.0 (2026-09-16)
 
@@ -23,4 +24,5 @@
   global `~/.workbuddy/` (cross-project MEMORY.md + read-only user profile).
 - Shutdown nudge when the daily file was never written.
 - Env switches: `PI_FILE_MEMORY_OFF/INJECT/GLOBAL/DEBUG/DAILY_TAIL/PROFILE/PROFILE_TAIL/LAYOUT`.
-- Standard pi package: installable via `pi install git:github.com/Halflifefa/pi-file-memory@v0.1.0` (`pi install npm:pi-file-memory` once the npm package is published).
+- Standard pi package: installable via `pi install npm:pi-file-memory` and
+  `pi install git:github.com/Halflifefa/pi-file-memory@v0.1.0`.
