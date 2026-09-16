@@ -39,23 +39,23 @@ cwd 含 `node_modules` 段的目录（服务器安装目录）视为非项目：
 ## 安装
 
 ```sh
-# 推荐：pi 包管理器一键安装
-pi install npm:pi-file-memory
-
-# 或：从 git 安装（pin 到 tag，无需 npm 包）
+# 推荐：从 git 安装（pin 到 tag）
 pi install git:github.com/Halflifefa/pi-file-memory@v0.1.0
 
+# npm 包（发布后启用）
+pi install npm:pi-file-memory
+
 # 项目级安装（写入 .pi/settings.json，可随仓库共享）
-pi install -l npm:pi-file-memory
+pi install -l git:github.com/Halflifefa/pi-file-memory@v0.1.0
 
 # 不安装，仅当前会话试用
-pi -e npm:pi-file-memory
+pi -e git:github.com/Halflifefa/pi-file-memory@v0.1.0
 
 # 手动：拷进扩展目录
 mkdir -p ~/.pi/agent/extensions && cp extensions/file-memory.ts ~/.pi/agent/extensions/
 ```
 
-重启 pi（或 `/reload`）生效。管理：`pi list` / `pi remove npm:pi-file-memory` /
+重启 pi（或 `/reload`）生效。管理：`pi list` / `pi remove git:github.com/Halflifefa/pi-file-memory` /
 `pi update --extensions`。
 
 > **注意**：如果之前手工拷过扩展（比如自己维护的 `wb-memory.ts`），装包前后删掉
@@ -157,24 +157,24 @@ treated as non-projects: only global memory applies, no project tree is created.
 ### Install
 
 ```sh
-# recommended: pi package manager, one-liner
-pi install npm:pi-file-memory
-
-# or: from git, pinned tag (no npm package needed)
+# recommended: from git, pinned tag
 pi install git:github.com/Halflifefa/pi-file-memory@v0.1.0
 
+# npm package (once published)
+pi install npm:pi-file-memory
+
 # project-local install (writes .pi/settings.json, shareable in your repo)
-pi install -l npm:pi-file-memory
+pi install -l git:github.com/Halflifefa/pi-file-memory@v0.1.0
 
 # try without installing (temp dir, current run only)
-pi -e npm:pi-file-memory
+pi -e git:github.com/Halflifefa/pi-file-memory@v0.1.0
 
 # manual: copy the extension into your extensions dir
 mkdir -p ~/.pi/agent/extensions && cp extensions/file-memory.ts ~/.pi/agent/extensions/
 ```
 
 Restart pi (or `/reload`) to pick it up. Manage with `pi list` /
-`pi remove npm:pi-file-memory` / `pi update --extensions`.
+`pi remove git:github.com/Halflifefa/pi-file-memory` / `pi update --extensions`.
 
 > **Note**: if you already hand-copy an extension (e.g. your own `wb-memory.ts`),
 > remove the hand-copied file before/after installing the package, or the memory
