@@ -1,17 +1,24 @@
 # pi-file-memory
 
-File-based persistent memory for the [pi coding agent](https://pi.dev) — a single
+pi 与 WorkBuddy 共用记忆系统的桥接扩展 — [pi coding agent](https://pi.dev) 单文件
 TypeScript extension, zero runtime dependencies.
 
-`文件式记忆`：记忆就是普通 Markdown 文件，模型用 read/write/edit 按纪律实时读写；
-无独立记忆工具、无向量库、无外部 CLI。路径与 WorkBuddy 记忆布局兼容（同路径共享记忆）。
+**Design purpose: ONE memory system shared between pi and WorkBuddy.** The memory
+layer is built directly on the WorkBuddy memory layout — same directory names, same
+file shapes, same conventions — so both tools read and write the **same tree** with
+zero migration and zero sync: 日记/铁律 pi 写下一轮 WorkBuddy 就能看到，反之亦然。
+
+Mechanics: memory is plain Markdown (no memory tool, no vector store, no external
+CLI); the model reads/writes files with ordinary read/write/edit tools under a
+byte-stable per-turn discipline reminder, and a memory snapshot is appended to the
+system prompt so history survives context compaction.
 
 ## Why files + discipline (not a memory API)
 
 | Concern | pi-file-memory |
 |---|---|
 | Auditability | Plain Markdown, git-trackable, human-editable |
-| Cross-project pollution | Project memory lives in `<project>/.workbuddy/memory/`, never shared |
+| Cross-project pollution | Project memory lives in `<project>/.workbuddy/memory/`, shared per project — never across projects |
 | Retrieval quality | No vector search to fail; the model reads exactly the files the discipline points at |
 | Windows / sandbox friendliness | No external CLI (no popup / re-exec surprises), only `node:fs/os/path` |
 | Write quality | Driven by a byte-stable per-turn discipline reminder, not by an LLM exit-summarizer (which tends to emit template junk) |
@@ -23,7 +30,7 @@ TypeScript extension, zero runtime dependencies.
 <project>/.workbuddy/memory/YYYY-MM-DD.md   daily work journal (append-style, tail injected)
 <project>/.workbuddy/memory/MEMORY.md       refined long-term project rules (head injected)
 <global>/MEMORY.md                          cross-project facts: user prefs, machine env, tools (head injected)
-<global>/memory/*_memory.md                 user profile maintained by an external tool (read-only, tail injected)
+<global>/memory/*_memory.md                 user profile extracted by WorkBuddy (read-only, tail injected)
 ```
 
 `<global>` defaults to `~/.workbuddy` (override with `PI_FILE_MEMORY_GLOBAL`).
@@ -73,14 +80,23 @@ Restart pi (or `/reload`) to pick it up.
 Inject caps (project `MEMORY.md` 8000 chars, global 4000 chars, layout 3000 chars)
 are compile-time constants — edit `file-memory.ts` if you need more.
 
-## WorkBuddy compatibility
+## Sharing memory with WorkBuddy
 
-Default paths intentionally match the WorkBuddy memory layout, so pi and
-WorkBuddy can read/write the **same** memory tree with zero migration (daily
-journals, `MEMORY.md`, and the `memory/*_memory.md` profile block). The profile
-strips a trailing `<!-- RAW_JSON_START … -->` serialization block when present.
-This extension is not affiliated with WorkBuddy; compatibility is opt-out only
-by changing `PROJECT_DIRNAME` / `PI_FILE_MEMORY_GLOBAL`.
+The `.workbuddy` path scheme is the WorkBuddy memory layout, used verbatim on
+purpose — that is the point of this plugin:
+
+- **Project tree** `<project>/.workbuddy/memory/`: pi and WorkBuddy sessions in
+  the same project append to the same daily journals and the same `MEMORY.md`.
+- **Global tree** `~/.workbuddy/`: shared cross-project `MEMORY.md` and the
+  `memory/*_memory.md` profile (WorkBuddy extracts it in the background; pi
+  treats it as read-only and strips the trailing `<!-- RAW_JSON_START … -->`
+  duplicate when injecting).
+- No sync layer, no export/import: the files **are** the shared store.
+
+If you do not run WorkBuddy, the plugin still works standalone as a file memory
+for pi — just point `PI_FILE_MEMORY_GLOBAL` at any directory you prefer.
+This extension is not affiliated with WorkBuddy; it only reuses the public
+on-disk layout.
 
 ## Privacy
 

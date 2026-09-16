@@ -1,7 +1,13 @@
 /**
- * pi-file-memory — file-based persistent memory for pi coding agent
+ * pi-file-memory — pi 与 WorkBuddy 共用记忆系统的桥接扩展
  *
- * Design (a "WorkBuddy-style" memory layer, deliberately dependency-free):
+ * Design purpose: share ONE memory system between pi and WorkBuddy. pi's memory
+ * layer is deliberately built on the WorkBuddy memory layout — same directory
+ * names, same file shapes, same conventions — so both tools read and write the
+ * same tree with zero migration and zero sync: pi 写下的日记/铁律，WorkBuddy
+ * 下一轮就能看到，反之亦然。
+ *
+ * How (a dependency-free file memory):
  *   - No independent memory tool, no embedding store, no external search CLI.
  *     Memory is plain Markdown the model reads/writes with ordinary file tools.
  *   - Every turn, a byte-stable <system-reminder> on the user side carries:
@@ -11,7 +17,7 @@
  *       daily  <project>/.workbuddy/memory/YYYY-MM-DD.md  (dense work journal, append)
  *       project <project>/.workbuddy/memory/MEMORY.md     (refined long-term rules)
  *       global  <global>/MEMORY.md                         (cross-project facts)
- *       profile <global>/memory/*_memory.md                (external-tool profile, read-only)
+ *       profile <global>/memory/*_memory.md                (WorkBuddy-maintained profile, read-only)
  *   - A snapshot of memory file contents is appended to the system prompt
  *     (rebuilt on session_start / day rollover / before_compact, byte-stable
  *     otherwise) so history survives context compaction.
@@ -24,9 +30,10 @@
  *   - Quality is driven by the per-turn discipline text, not by an LLM
  *     summarizer at exit (which tends to emit template junk).
  *
- * Layout compatibility: the default paths match the WorkBuddy memory layout,
- * so pi and WorkBuddy can share the same memory tree with zero migration.
- * Override the global dir with PI_FILE_MEMORY_GLOBAL.
+ * Layout: the `.workbuddy` path scheme is the WorkBuddy memory layout, used
+ * verbatim on purpose (that is the point — shared memory). Override the global
+ * dir with PI_FILE_MEMORY_GLOBAL if you do not run WorkBuddy; the plugin still
+ * works standalone, you just get pi-only memory at a different path.
  *
  * Non-project dirs (cwd contains a node_modules segment, e.g. a server
  * install directory) are demoted to global-memory-only: no project memory
@@ -68,8 +75,8 @@ const PROFILE_ON = env.PI_FILE_MEMORY_PROFILE !== "0"; // global user profile (e
 const PROFILE_TAIL = Number(env.PI_FILE_MEMORY_PROFILE_TAIL) > 0 ? Number(env.PI_FILE_MEMORY_PROFILE_TAIL) : 6000;
 const DEBUG = env.PI_FILE_MEMORY_DEBUG === "1";
 
-/** Default project memory dir name. Kept as ".workbuddy" for WorkBuddy layout
- * compatibility (shared memory tree, zero migration). */
+/** Default project memory dir name. ".workbuddy" is the WorkBuddy memory
+ * layout — shared on purpose so both tools use one memory tree. */
 const PROJECT_DIRNAME = ".workbuddy";
 
 function projectMemoryDir(cwd: string): string {
@@ -284,7 +291,7 @@ function buildSnapshot(cwd: string, reason: string): Snapshot {
 	if (globMem) sections.push(`### 全局跨项目记忆 ${globalDir}\\MEMORY.md\n${headText(globMem, GLOBAL_MAX)}`);
 	const profilePath = PROFILE_ON ? findUserProfile(globalDir) : null;
 	const profile = profilePath ? cleanProfile(readFileSafe(profilePath) ?? "") : null;
-	if (profile) sections.push(`### 全局用户画像（外部工具后台维护，只读勿改）${profilePath}\n${tailText(profile, PROFILE_TAIL)}`);
+	if (profile) sections.push(`### 全局用户画像（WorkBuddy 后台抽取维护，只读勿改）${profilePath}\n${tailText(profile, PROFILE_TAIL)}`);
 	const todayLog = readFileSafe(path.join(dir, `${today}.md`))?.trim();
 	if (todayLog) sections.push(`### 日记 ${today}（今日，尾部）\n${tailText(todayLog, DAILY_TAIL)}`);
 	const yLog = readFileSafe(path.join(dir, `${yesterday}.md`))?.trim();
@@ -334,7 +341,7 @@ ${fmtCurrentTime()}
 </additional_data>
 <memory_discipline>
 记忆规则（文件式记忆，用普通 read/write/edit 文件工具操作，无独立记忆工具）：
-${projectBlock}- 跨项目事实（用户偏好、机器环境、通用工具）写入 ${globMem}。全局用户画像（${globDir}\\memory\\*_memory.md）由外部工具后台抽取维护，只读，不要改写。
+${projectBlock}- 跨项目事实（用户偏好、机器环境、通用工具）写入 ${globMem}。全局用户画像（${globDir}\\memory\\*_memory.md）由 WorkBuddy 后台抽取维护，只读，不要改写。
 - 会话开始时若需要历史背景，先 read 今日/昨日日记与 MEMORY.md（快照可能滞后，文件为准）；更早的历史日记在同目录（YYYY-MM-DD.md，数十天份），查过程细节/旧决策用 grep 搜关键词或按日期 read。
 - 勘误优先：发现记忆有误，改写原条目并注明日期，不要只追加矛盾新条目。
 - 寒暄、简单查询、短问答不用写。
