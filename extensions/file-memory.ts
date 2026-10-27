@@ -10,16 +10,16 @@
  * How (a dependency-free file memory):
  *   - No independent memory tool, no embedding store, no external search CLI.
  *     Memory is plain Markdown the model reads/writes with ordinary file tools.
- *   - Every turn, a byte-stable <system-reminder> on the user side carries:
+ *   - Every turn, a <system-reminder> on the user side carries:
  *       1) current_time (second precision + timezone)
- *       2) memory_discipline — per-turn writing rules with resolved file paths
+ *       2) memory_discipline — writing rules, stable while paths/date are unchanged
  *   - The model writes memory files in the tool-call phase of the turn:
  *       daily  <project>/.workbuddy/memory/YYYY-MM-DD.md  (dense work journal, append)
  *       project <project>/.workbuddy/memory/MEMORY.md     (refined long-term rules)
  *       global  <global>/MEMORY.md                         (cross-project facts)
  *       profile <global>/memory/*_memory.md                (WorkBuddy-maintained profile, read-only)
  *   - A snapshot of memory file contents is appended to the system prompt
- *     (rebuilt on session_start / day rollover / before_compact, byte-stable
+ *     (rebuilt on session_start / cwd change / day rollover / before_compact, byte-stable
  *     otherwise) so history survives context compaction.
  *   - On session shutdown, a TUI nudge if the daily file was never written.
  *
@@ -156,6 +156,14 @@ function mtimeSafe(p: string): number {
 	}
 }
 
+function hasMemoryFiles(dir: string): boolean {
+	try {
+		return fs.readdirSync(dir).length > 0;
+	} catch {
+		return false;
+	}
+}
+
 /** Tail slice (daily logs are append-style; newest content is at the tail) */
 function tailText(content: string, maxChars: number): string {
 	const t = content.trim();
@@ -285,17 +293,21 @@ function buildSnapshot(cwd: string, reason: string): Snapshot {
 		const layout = buildLayout(cwd);
 		if (layout) sections.push(`### 项目布局（会话开始时快照，可能滞后，ls 为准）\n${layout}`);
 	}
-	const projMem = readFileSafe(path.join(dir, "MEMORY.md"))?.trim();
-	if (projMem) sections.push(`### 项目长期记忆 ${PROJECT_DIRNAME}/memory/MEMORY.md\n${headText(projMem, MEMORY_MAX)}`);
+	if (isProjectCwd(cwd)) {
+		const projMem = readFileSafe(path.join(dir, "MEMORY.md"))?.trim();
+		if (projMem) sections.push(`### 项目长期记忆 ${PROJECT_DIRNAME}/memory/MEMORY.md\n${headText(projMem, MEMORY_MAX)}`);
+	}
 	const globMem = readFileSafe(path.join(globalDir, "MEMORY.md"))?.trim();
 	if (globMem) sections.push(`### 全局跨项目记忆 ${path.join(globalDir, "MEMORY.md")}\n${headText(globMem, GLOBAL_MAX)}`);
 	const profilePath = PROFILE_ON ? findUserProfile(globalDir) : null;
 	const profile = profilePath ? cleanProfile(readFileSafe(profilePath) ?? "") : null;
 	if (profile) sections.push(`### 全局用户画像（WorkBuddy 后台抽取维护，只读勿改）${profilePath}\n${tailText(profile, PROFILE_TAIL)}`);
-	const todayLog = readFileSafe(path.join(dir, `${today}.md`))?.trim();
-	if (todayLog) sections.push(`### 日记 ${today}（今日，尾部）\n${tailText(todayLog, DAILY_TAIL)}`);
-	const yLog = readFileSafe(path.join(dir, `${yesterday}.md`))?.trim();
-	if (yLog) sections.push(`### 日记 ${yesterday}（昨日，尾部）\n${tailText(yLog, DAILY_TAIL)}`);
+	if (isProjectCwd(cwd)) {
+		const todayLog = readFileSafe(path.join(dir, `${today}.md`))?.trim();
+		if (todayLog) sections.push(`### 日记 ${today}（今日，尾部）\n${tailText(todayLog, DAILY_TAIL)}`);
+		const yLog = readFileSafe(path.join(dir, `${yesterday}.md`))?.trim();
+		if (yLog) sections.push(`### 日记 ${yesterday}（昨日，尾部）\n${tailText(yLog, DAILY_TAIL)}`);
+	}
 
 	const takenAt = fmtCurrentTime();
 	const text =
@@ -341,7 +353,7 @@ ${fmtCurrentTime()}
 </additional_data>
 <memory_discipline>
 记忆规则（文件式记忆，用普通 read/write/edit 文件工具操作，无独立记忆工具）：
-${projectBlock}- 跨项目事实（用户偏好、机器环境、通用工具）写入 ${globMem}。全局用户画像（${path.join(globDir, "memory")}\\*_memory.md）由 WorkBuddy 后台抽取维护，只读，不要改写。
+${projectBlock}- 跨项目事实（用户偏好、机器环境、通用工具）写入 ${globMem}。全局用户画像（${path.join(globDir, "memory", "*_memory.md")}）由 WorkBuddy 后台抽取维护，只读，不要改写。
 - 会话开始时若需要历史背景，先 read 今日/昨日日记与 MEMORY.md（快照可能滞后，文件为准）；更早的历史日记在同目录（YYYY-MM-DD.md，数十天份），查过程细节/旧决策用 grep 搜关键词或按日期 read。
 - 勘误优先：发现记忆有误，改写原条目并注明日期，不要只追加矛盾新条目。
 - 寒暄、简单查询、短问答不用写。
@@ -365,7 +377,7 @@ export default function (pi: ExtensionAPI): void {
 		snapshot = buildSnapshot(cwd, "session_start");
 		if (ctx.hasUI && isProjectCwd(cwd)) {
 			const dir = projectMemoryDir(cwd);
-			const has = fs.existsSync(path.join(dir, "MEMORY.md")) || fs.readdirSync(dir).length > 0;
+			const has = hasMemoryFiles(dir);
 			if (!has) {
 				ctx.ui.notify(`pi-file-memory: 本项目尚无记忆（${dir}），实质性工作后按纪律写入。`, "info");
 			}
@@ -382,6 +394,7 @@ export default function (pi: ExtensionAPI): void {
 			// dir changed (rare): rebuild for the new dir
 			sessionStartDir = cwd;
 			sessionStartDailyMtime = mtimeSafe(path.join(projectMemoryDir(cwd), `${todayStr()}.md`));
+			snapshot = null;
 		}
 		if (!snapshot || snapshot.date !== todayStr()) {
 			snapshot = buildSnapshot(cwd, snapshot ? "day_rollover" : "before_agent_start");

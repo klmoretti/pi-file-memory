@@ -22,7 +22,7 @@ system prompt，保证历史在上下文压缩后仍然存活。
 | 检索质量 | 无向量搜索可失效；模型按纪律精确定位该读的文件 |
 | Windows/沙箱友好 | 无外部 CLI（无弹窗/re-exec 意外），仅用 `node:fs/os/path` |
 | 写入质量 | 由逐轮字节稳定的纪律提醒驱动，而非退出时 LLM 摘要（后者易产出模板化垃圾） |
-| 抗上下文压缩 | 记忆快照追加到 system prompt，仅在会话开始/跨日/压缩前重建，其余轮次字节稳定（不破坏 prompt 缓存） |
+| 抗上下文压缩 | 记忆快照追加到 system prompt，在会话开始/切换工作目录/跨日/压缩前重建，其余轮次字节稳定 |
 
 ## 记忆布局
 
@@ -43,7 +43,7 @@ cwd 含 `node_modules` 段的目录（服务器安装目录）视为非项目：
 pi install npm:pi-file-memory
 
 # 或：从 git 安装（pin 到 tag）
-pi install git:github.com/klmoretti/pi-file-memory@v0.1.0
+pi install git:github.com/klmoretti/pi-file-memory@v0.1.1
 
 # 项目级安装（写入 .pi/settings.json，可随仓库共享）
 pi install -l npm:pi-file-memory
@@ -64,11 +64,11 @@ mkdir -p ~/.pi/agent/extensions && cp extensions/file-memory.ts ~/.pi/agent/exte
 ## 每轮行为
 
 1. **用户侧提醒**（TUI 中隐藏）：`<current_time>`（秒级 + 时区）+
-   `<memory_discipline>`（解析好的文件路径 + 写入规则），逐轮字节稳定。
+   `<memory_discipline>`（解析好的文件路径 + 写入规则）。时间逐轮更新；纪律文本在路径和日期不变时字节稳定。
 2. **system prompt 快照**：项目 `MEMORY.md` + 全局 `MEMORY.md` + 用户画像 +
    今日/昨日日记尾部 + 项目顶层布局树（文件数 + 扩展名直方图）。
-   在 `session_start`、跨日、`session_before_compact` 时重建，其余轮次字节不变。
-3. **收尾提醒**：会话有实质工作但没写当日日志时，TUI 提示一句。
+   在 `session_start`、工作目录切换、跨日、`session_before_compact` 时重建，其余轮次字节不变。
+3. **收尾提醒**：退出时若未检测到今日日志更新，TUI 提示一句；不判断会话是否做过实质工作。
 
 ## 环境变量
 
@@ -139,7 +139,7 @@ prompt so history survives context compaction.
 | Retrieval quality | No vector search to fail; the model reads exactly the files the discipline points at |
 | Windows / sandbox friendliness | No external CLI, only `node:fs/os/path` |
 | Write quality | Driven by a byte-stable per-turn discipline reminder, not by an LLM exit-summarizer (which tends to emit template junk) |
-| Surviving compaction | Memory snapshot appended to the system prompt, rebuilt on session start / day rollover / before-compact, byte-stable otherwise (prompt-cache friendly) |
+| Surviving compaction | Memory snapshot appended to the system prompt, rebuilt on session start / working-directory change / day rollover / before-compact, byte-stable otherwise |
 
 ### Memory layout
 
@@ -161,7 +161,7 @@ treated as non-projects: only global memory applies, no project tree is created.
 pi install npm:pi-file-memory
 
 # or: from git, pinned tag
-pi install git:github.com/klmoretti/pi-file-memory@v0.1.0
+pi install git:github.com/klmoretti/pi-file-memory@v0.1.1
 
 # project-local install (writes .pi/settings.json, shareable in your repo)
 pi install -l npm:pi-file-memory
@@ -184,13 +184,15 @@ Restart pi (or `/reload`) to pick it up. Manage with `pi list` /
 
 1. **User-side reminder** (hidden in TUI): `<current_time>` (second precision +
    timezone) + `<memory_discipline>` with resolved file paths and writing rules;
-   byte-stable across turns.
+   time updates each turn; the discipline text is byte-stable while paths and
+   the date are unchanged.
 2. **System-prompt snapshot**: project `MEMORY.md` + global `MEMORY.md` + user
    profile + today/yesterday daily tails + a top-level project layout tree
    (file counts + extension histograms). Rebuilt on `session_start`, day
-   rollover, and `session_before_compact`; byte-stable in between.
-3. **Shutdown nudge**: a one-line TUI reminder if the session did substantive
-   work but never wrote the daily file.
+   rollover, working-directory changes, and `session_before_compact`;
+   byte-stable in between.
+3. **Shutdown nudge**: a one-line TUI reminder if no update to today's daily
+   file was detected at exit; substantive work is not tracked.
 
 ### Environment variables
 
