@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+- 修复新项目记忆目录缺失或不可读时 `session_start` 抛出异常。
+- 切换工作目录时立即重建快照，避免继续注入上一个项目的记忆。
+- `node_modules` 目录只注入全局记忆，不再读取项目长期记忆及日记。
+- 修正用户画像通配路径、repository URL 和双语 README 的版本及行为描述。
+- 添加启动、目录切换和非项目目录的回归测试（`npm test`，Node.js 22.19+）。
+- Fix startup with missing/unreadable memory directories, rebuild snapshots on
+  working-directory changes, and exclude project memory under `node_modules`.
+- Correct profile paths, repository metadata, and bilingual installation and
+  behavior documentation; add regression coverage via `npm test` (Node.js 22.19+).
+
 ## 0.1.1 (2026-09-16)
 
 - 修复 Linux 上全局记忆路径拼接 bug：两处模板里硬编码反斜杠（`MEMORY.md` 与

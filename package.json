@@ -6,7 +6,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Halflifefa/pi-file-memory.git"
+    "url": "git+https://github.com/klmoretti/pi-file-memory.git"
   },
   "files": [
     "extensions"
@@ -16,5 +16,8 @@
   },
   "peerDependencies": {
     "@earendil-works/pi-coding-agent": "*"
+  },
+  "scripts": {
+    "test": "node --experimental-strip-types --test tests/file-memory.test.mjs"
   }
 }
