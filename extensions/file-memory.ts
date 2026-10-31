@@ -13,7 +13,9 @@
  *   - Every turn, a <system-reminder> on the user side carries:
  *       1) current_time (second precision + timezone)
  *       2) memory_discipline — writing rules, stable while paths/date are unchanged
- *   - The model writes memory files in the tool-call phase of the turn:
+ *   - The model writes memory files in the tool-call phase of the turn, before
+ *     the main answer (the answer is the turn's final output — no tool call or
+ *     trailing text after it):
  *       daily  <project>/.workbuddy/memory/YYYY-MM-DD.md  (dense work journal, append)
  *       project <project>/.workbuddy/memory/MEMORY.md     (refined long-term rules)
  *       global  <global>/MEMORY.md                         (cross-project facts)

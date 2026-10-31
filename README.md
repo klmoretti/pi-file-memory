@@ -43,7 +43,7 @@ cwd 含 `node_modules` 段的目录（服务器安装目录）视为非项目：
 pi install npm:pi-file-memory
 
 # 或：从 git 安装（pin 到 tag）
-pi install git:github.com/klmoretti/pi-file-memory@v0.1.1
+pi install git:github.com/klmoretti/pi-file-memory@v0.1.2
 
 # 项目级安装（写入 .pi/settings.json，可随仓库共享）
 pi install -l npm:pi-file-memory
@@ -161,7 +161,7 @@ treated as non-projects: only global memory applies, no project tree is created.
 pi install npm:pi-file-memory
 
 # or: from git, pinned tag
-pi install git:github.com/klmoretti/pi-file-memory@v0.1.1
+pi install git:github.com/klmoretti/pi-file-memory@v0.1.2
 
 # project-local install (writes .pi/settings.json, shareable in your repo)
 pi install -l npm:pi-file-memory

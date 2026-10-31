@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.3 (2026-10-31)
+
+- README 的 git 安装示例 pin 从 v0.1.1 更新为 v0.1.2（中英文各一处）。
+- 扩展文件头注释补全记忆写入时序：写入先于正文、主答案为本轮最后输出（与 0.1.2 的注入规则一致）。
+- Update the README git-install example pin from v0.1.1 to v0.1.2 (both
+  language sections).
+- Extend the extension header comment with the memory-write ordering (writes
+  precede the answer; the answer is the turn's final output), matching the 0.1.2
+  injected rule.
+
 ## 0.1.2 (2026-10-31)
 
 - 修复新项目记忆目录缺失或不可读时 `session_start` 抛出异常。
