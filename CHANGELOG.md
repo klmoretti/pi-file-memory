@@ -1,14 +1,17 @@
 # Changelog
 
-## Unreleased
+## 0.1.2 (2026-10-31)
 
 - 修复新项目记忆目录缺失或不可读时 `session_start` 抛出异常。
 - 切换工作目录时立即重建快照，避免继续注入上一个项目的记忆。
 - `node_modules` 目录只注入全局记忆，不再读取项目长期记忆及日记。
+- 修正注入规则中记忆写入顺序的歧义表述：记忆写入先于正文，主答案之后不得再出现工具调用或追加文字（防主答案被记忆写入截断成多个气泡）。
 - 修正用户画像通配路径、repository URL 和双语 README 的版本及行为描述。
 - 添加启动、目录切换和非项目目录的回归测试（`npm test`，Node.js 22.19+）。
 - Fix startup with missing/unreadable memory directories, rebuild snapshots on
   working-directory changes, and exclude project memory under `node_modules`.
+- Clarify the memory-write ordering rule so the final answer is never split by
+  a memory-write tool call or a trailing one-liner.
 - Correct profile paths, repository metadata, and bilingual installation and
   behavior documentation; add regression coverage via `npm test` (Node.js 22.19+).
 
